@@ -1,16 +1,9 @@
-const {
-  createUser,
-  findByEmail,
-  createNickname,
-  duplication,
-  findById,
-  createPet,
-} = require('../../service/user/user.service');
+const UserService = require('../../service/user/user.service');
 const crypto = require('crypto');
 const { createToken, verifyToken } = require('../../consts/token');
 const { createError } = require('../../utils/error');
-const users = require('../../schemas/user/user.schema');
 const pets = require('../../schemas/pet/pet.schema');
+const config = require('../../consts/app');
 
 class UserController {
   async signup(req, res, next) {
@@ -22,15 +15,15 @@ class UserController {
       .digest('base64');
 
     try {
-      const existingUser = await findByEmail(email);
+      const existingUser = await UserService.findByEmail(email);
 
-      const randomNickname = await createNickname(name);
+      const randomNickname = await UserService.createNickname(name);
 
       if (existingUser) {
         throw createError(409, '이미 존재하는 이메일');
       }
 
-      await createUser({
+      await UserService.createUser({
         name: name,
         email: email,
         password: hashedPassword,
@@ -47,11 +40,10 @@ class UserController {
     const { email } = req.body;
 
     try {
-      const user = await findByEmail(email);
+      const user = await UserService.findByEmail(email);
       if (!user) {
         throw createError(404, '가입된 회원 정보가 없습니다.');
       }
-      console.log(user);
 
       const token = createToken({ email: user.email, userId: user._id });
 
@@ -82,16 +74,6 @@ class UserController {
     }
   }
 
-  async logout(req, res, next) {
-    try {
-      res.clearCookie('token');
-      res.clearCookie('loginStatus');
-      res.status(200).json({ message: '로그아웃 완료' });
-    } catch (error) {
-      next(error);
-    }
-  }
-
   async getUserInfo(req, res, next) {
     const { token } = req.cookies;
 
@@ -104,7 +86,7 @@ class UserController {
 
       const email = decodedToken.email;
 
-      const user = await findByEmail(email).populate('userPet');
+      const user = await UserService.findByEmail(email);
 
       if (!user) {
         throw createError(404, '유저 정보가 없습니다!');
@@ -119,6 +101,7 @@ class UserController {
           nickName: user.nickName,
           image: user.profileImage,
           pet: user.userPet,
+          address: user.address,
         },
       });
     } catch (error) {
@@ -130,7 +113,7 @@ class UserController {
     const { nickName } = req.body;
 
     try {
-      const confirm = await duplication(nickName);
+      const confirm = await UserService.duplication(nickName);
 
       if (!confirm) {
         throw createError(409, '이미 사용중인 닉네임 입니다.');
@@ -144,7 +127,7 @@ class UserController {
   }
 
   async updateUserInfo(req, res, next) {
-    const { userNickName, profileImg, userEmail } = req.body;
+    const { userNickName, profileImage, userEmail, selectedAddress } = req.body;
     const { token } = req.cookies;
 
     try {
@@ -152,20 +135,23 @@ class UserController {
         throw createError(400, '토큰 인증 실패');
       }
 
-      const updateInfo = await users.findOneAndUpdate(
-        { email: userEmail },
-        {
-          nickName: userNickName,
-          profileImage: profileImg,
+      const updateInfo = await UserService.updateUser(userEmail, {
+        nickName: userNickName,
+        profileImage: profileImage,
+        address: {
+          jibunAddress: selectedAddress.jibunAddress,
+          location: {
+            type: selectedAddress.location.type,
+            coordinates: selectedAddress.location.coordinates,
+          },
         },
-        { new: true },
-      );
+      });
 
       if (!updateInfo) {
         throw createError(404, '유저 정보가 없습니다.');
       }
 
-      res.status(200).json({
+      res.status(201).json({
         success: true,
         message: '유저 정보 업데이트 성공',
         user: updateInfo,
@@ -178,14 +164,11 @@ class UserController {
   async createPetInfo(req, res, next) {
     const { userId, formData, image } = req.body;
 
-    console.log('반려동물 생성 폼데이터:', formData);
-    console.log('이미지:', image);
-
     try {
-      const user = await findById(userId);
+      const user = await UserService.findById(userId);
 
       // 새로운 반려동물 추가
-      const newPet = await createPet({
+      const newPet = await UserService.createPet({
         name: formData.name,
         age: formData.age,
         breed: formData.breed,
@@ -195,7 +178,7 @@ class UserController {
       user.userPet.push(newPet._id);
       await user.save();
 
-      res.status(200).json({
+      res.status(201).json({
         success: true,
         message: '반려동물이 추가되었습니다.',
         pet: {
@@ -213,36 +196,29 @@ class UserController {
 
   async updatePetInfo(req, res, next) {
     const { userPet, petImage, petId } = req.body;
-    console.log('petId:', petId);
+
     try {
       // 기존 반려동물 프로필 수정
-      const updatePet = await pets.findOneAndUpdate(
-        { _id: petId },
-        {
-          name: userPet.name,
-          age: userPet.age,
-          breed: userPet.breed,
-          gender: userPet.gender,
-          image: petImage,
-        },
-        { new: true },
-      );
+      const updatedPet = await UserService.updatePet(petId, {
+        name: userPet.name,
+        age: userPet.age,
+        breed: userPet.breed,
+        image: petImage,
+      });
 
-      console.log('updtaePet', updatePet);
-
-      if (!updatePet) {
-        throw createError(404, '반려동물을 찾을 수 없습니다.');
+      if (!updatedPet) {
+        throw createError(404, '반려동물을 찾을 수 없습니다, 업데이트 실패');
       }
 
-      res.status(200).json({
+      res.status(201).json({
         success: true,
         message: '반려동물 정보가 업데이트되었습니다.',
         pet: {
-          _id: updatePet._id,
-          age: updatePet.age,
-          name: updatePet.name,
-          image: updatePet.image,
-          breed: updatePet.breed,
+          _id: updatedPet._id,
+          age: updatedPet.age,
+          name: updatedPet.name,
+          image: updatedPet.image,
+          breed: updatedPet.breed,
         },
       });
     } catch (error) {
@@ -253,18 +229,78 @@ class UserController {
   async deletePetInfo(req, res, next) {
     const { userId, petId } = req.body;
 
-    const user = await findById(userId);
+    const user = await UserService.findById(userId);
 
     if (!user) {
       throw createError(404, '유저 정보가 없습니다.');
     }
 
     user.userPet = user.userPet.filter((id) => id.toString() !== petId);
-    await user.save();
 
     await pets.findByIdAndDelete(petId);
 
-    res.status(200).json({ success: true, message: '반려동물 정보 삭제 성공' });
+    res.status(201).json({ success: true, message: '반려동물 정보 삭제 성공' });
+  }
+
+  async getUsersByLocation(req, res, next) {
+    const { lat, lng } = req.query;
+    if (!lat || !lng) throw createError(400, '위치 정보가 필요합니다.');
+    try {
+      const users = (await UserService.findUsersByLocation(lng, lat)) ?? [];
+      return res.status(200).json({ success: true, users });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getUserByNickname(req, res, next) {
+    const { nickname } = req.params;
+    try {
+      if (!nickname) {
+        throw createError(400, '유저 정보가 필요합니다.');
+      }
+      const user = await UserService.findUserByNickname(nickname);
+      if (!user) {
+        throw createError(400, '대화 상대를 찾을 수 없습니다.');
+      }
+      return res.status(200).json({ success: true, user });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getCoordinate(req, res, next) {
+    try {
+      const { address } = req.params;
+
+      if (!address) {
+        throw createError(400, '주소가 필요합니다.');
+      }
+
+      const apiKey = config.externalData.apiKeys.vword;
+
+      const encodedAddress = encodeURIComponent(address);
+      const apiUrl = `https://api.vworld.kr/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=${encodedAddress}&refine=true&simple=false&format=json&type=road&key=${apiKey}`;
+
+      const response = await fetch(apiUrl, {
+        headers: {
+          Accept: 'application/json',
+        },
+        cache: 'no-store',
+      });
+
+      const data = await response.json();
+
+      if (!data) {
+        throw createError(400, '주소 좌표 변환 실패');
+      }
+
+      const point = data.response.result.point;
+      res.json({ x: point.x, y: point.y });
+    } catch (error) {
+      console.error('좌표 변환 오류:', error);
+      next(error);
+    }
   }
 }
 

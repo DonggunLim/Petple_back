@@ -35,10 +35,10 @@ class CommentController {
   async updateComment(req, res, next) {
     const { id } = req.params;
     const { description, postId } = req.body;
-    if (!id) {
-      throw createError(400, '댓글 정보가 필요합니다.');
-    }
     try {
+      if (!id) {
+        throw createError(400, '댓글 정보가 필요합니다.');
+      }
       const isExistedPost = await PostService.getPostById(postId);
       if (!isExistedPost) {
         throw createError(404, '게시물 정보가 없습니다.');
@@ -59,7 +59,7 @@ class CommentController {
       await CommentService.addReply(targetCommentId, {
         _id: user._id,
         name: user.name,
-        nickname: user.nickName,
+        nickName: user.nickName,
         profileImage: user.profileImage,
         email: user.email,
         description,

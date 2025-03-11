@@ -1,15 +1,14 @@
 const jwt = require('jsonwebtoken');
 const { verifyToken } = require('../consts/token');
 const { findByEmail } = require('../service/user/user.service');
+const { createError } = require('../utils/error');
 
 const token = async (req, res, next) => {
   try {
     const { token } = req.cookies;
 
     if (!token) {
-      const error = new Error('토큰이 존재하지 않습니다.');
-      error.status = 401;
-      return next(error);
+      throw createError(401, '토큰이 존재하지 않습니다.');
     }
 
     const decodedToken = await verifyToken(token);
@@ -18,9 +17,7 @@ const token = async (req, res, next) => {
 
     const user = await findByEmail(email);
     if (!user) {
-      const error = new Error('유저가 존재하지 않습니다.');
-      error.status = 404;
-      return next(error);
+      throw createError(404, '유저가 존재하지 않습니다.');
     }
 
     req.user = user;
@@ -28,11 +25,11 @@ const token = async (req, res, next) => {
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
-      return res.status(400).json({ message: '토큰이 만료되었습니다.' });
+      throw createError(400, '토큰이 만료되었습니다.');
     }
 
     if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ message: '토큰이 조작되었습니다.' });
+      throw createError(401, '토큰이 조작되었습니다.');
     }
 
     return next(error);

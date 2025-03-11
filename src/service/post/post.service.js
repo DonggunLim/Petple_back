@@ -6,9 +6,9 @@ class PostService {
     const skip = (page - 1) * limit;
     try {
       const [posts, totalPostsCount] = await Promise.all([
-        Post.find() //
+        Post.find({}, '-password -__v -updatedAt') //
           .sort({ createdAt: -1 })
-          .populate('creator')
+          .populate('creator', 'name nickName profileImage')
           .skip(skip)
           .limit(limit)
           .lean(),
@@ -43,6 +43,18 @@ class PostService {
         {
           $limit: 10,
         },
+        {
+          $project: {
+            _id: 1,
+            tags: 1,
+            images: 1,
+            description: 1,
+            comments: 1,
+            likesCount: 1,
+            createdAt: 1,
+            'creator.nickName': 1,
+          },
+        },
       ]);
       return documents;
     } catch (error) {
@@ -52,11 +64,16 @@ class PostService {
 
   async getPostById(postId) {
     try {
-      const document = await Post.findById(postId)
-        .populate('creator')
+      const document = await Post.findById(postId, '-updatedAt -__v')
+        .populate('creator', 'name nickName profileImage')
         .populate({
           path: 'comments',
-          populate: { path: 'creator' },
+          select: '-hasParent -updatedAt -__v',
+          populate: {
+            path: 'creator',
+            select:
+              '-userType -createdAt -updatedAt -__v -address -password -userPet',
+          },
         })
         .lean();
       return document;

@@ -14,5 +14,7 @@ postsRoutes.delete(
   PostController.deleteComment,
 );
 postsRoutes.patch('/post/:id', token, PostController.updatePostLikesField);
+postsRoutes.get('/:nickName', PostController.getUserPosts);
+postsRoutes.get('/like/:nickName', PostController.getUserLikePosts);
 
 module.exports = postsRoutes;

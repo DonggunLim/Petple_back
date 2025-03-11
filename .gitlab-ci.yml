@@ -1,0 +1,41 @@
+# rm : 컨테이너 삭제
+# rmi : 컨테이너 이미지 삭제
+# -d : 백그라운드에서 실행
+# -p 80:80 : 호스트의 포트(80)을 컨테이너의 포트(80)과 연결
+
+# 파이프라인 단계 정의
+stages:
+  - build_and_publish
+  - deploy
+
+variables:
+  TAG_LATEST: ahyeon02/petple:latest
+  TAG_COMMIT: ahyeon02/petple:$CI_COMMIT_SHORT_SHA
+
+build_and_publish:
+  stage: build_and_publish
+  script:
+    - docker build -t $TAG_COMMIT -t $TAG_LATEST .
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PAT
+    - docker push $TAG_COMMIT
+    - docker push $TAG_LATEST
+
+deploy:
+  stage: deploy
+  script:
+    - echo $ID_RSA
+    - chmod og= $ID_RSA
+    - apk update && apk add openssh-client
+    # - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "pwd"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "echo $SERVER_CONFIG | base64 -d > .env"
+    # - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "cat .env"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PAT"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker pull $TAG_COMMIT"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker container rm -f petple-back || true"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker run -d -p 3000:3000 --name petple-back $TAG_COMMIT"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker cp ./.env petple-back:/app"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker restart petple-back"
+  environment:
+    name: production
+  only:
+    - develop

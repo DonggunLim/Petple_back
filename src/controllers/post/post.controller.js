@@ -1,5 +1,7 @@
 const CommentService = require('../../service/comment/comment.service');
 const PostService = require('../../service/post/post.service');
+const UserService = require('../../service/user/user.service');
+
 const { createError } = require('../../utils/error');
 
 class PostController {
@@ -43,6 +45,7 @@ class PostController {
       if (!post) {
         throw createError(404, '잘못된 게시글 정보 요청 입니다.');
       }
+
       return res.status(200).json({ success: true, post });
     } catch (error) {
       next(createError(500, `게시글을 가져오는데 실패하였습니다. ${error}`));
@@ -84,18 +87,18 @@ class PostController {
   }
 
   async deletePost(req, res, next) {
-    const { id } = req.params;
-    const post = req.body;
+    const { id: postId } = req.params;
     const { _id: requestUserId } = req.user;
-    if (!id) {
+    if (!postId) {
       return next(createError(400, '게시글 정보가 필요합니다.'));
     }
     try {
-      const { creator } = await PostService.getPostById(id);
+      const { creator } = await PostService.getPostById(postId);
       if (creator._id.toString() !== requestUserId.toString()) {
         return next(createError(401, '게시글 삭제 권한이 없습니다.'));
       }
-      await PostService.deletePostById(id, post);
+      await PostService.deletePostById(postId);
+      await CommentService.deleteCommentsByPostId(postId);
       return res
         .status(204)
         .json({ success: true, message: '게시글 삭제 성공' });
@@ -136,6 +139,57 @@ class PostController {
       return res
         .status(200)
         .json({ success: true, message: '게시글 정보를 수정하였습니다.' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getUserPosts(req, res, next) {
+    const { page } = req.query;
+    const { nickName } = req.params;
+
+    const pageSize = 9;
+
+    const user = await UserService.findUserByNickname(nickName);
+    if (!user) {
+      throw createError(404, '유저 정보가 없습니다.');
+    }
+
+    const userId = user._id;
+
+    try {
+      const userPosts = await UserService.userPost(userId, page, pageSize);
+
+      return res.status(200).json({
+        success: true,
+        message: '게시물 조회 성공',
+        userPosts: userPosts,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getUserLikePosts(req, res, next) {
+    const { page } = req.query;
+    const { nickName } = req.params;
+    const pageSize = 9;
+
+    const user = await UserService.findUserByNickname(nickName);
+    if (!user) {
+      throw createError(404, '유저 정보가 없습니다.');
+    }
+
+    const userId = user._id;
+
+    try {
+      const likePosts = await UserService.likePost(userId, page, pageSize);
+
+      return res.status(200).json({
+        success: true,
+        message: '게시물 조회 성공',
+        likePosts: likePosts,
+      });
     } catch (error) {
       next(error);
     }

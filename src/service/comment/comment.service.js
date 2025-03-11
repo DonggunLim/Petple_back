@@ -35,6 +35,14 @@ class CommentService {
     }
   }
 
+  async deleteCommentsByPostId(postId) {
+    try {
+      await Comment.deleteMany({ post: postId });
+    } catch (error) {
+      throw createError(500, `[DB에러] CommentService.getCommentById`);
+    }
+  }
+
   async updateComment(id, description) {
     try {
       await Comment.findByIdAndUpdate(id, { description });
@@ -47,7 +55,7 @@ class CommentService {
 
   async addReply(
     commentId,
-    { _id: creatorId, name, nickname, profileImage, email, description, tag },
+    { _id: creatorId, name, nickName, profileImage, email, description, tag },
   ) {
     try {
       const document = await Comment.findByIdAndUpdate(commentId, {
@@ -55,7 +63,7 @@ class CommentService {
           replies: {
             creatorId,
             name,
-            nickname,
+            nickName,
             profileImage,
             email,
             description,

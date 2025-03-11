@@ -1,7 +1,7 @@
 const axios = require('axios');
 const convert = require('xml-js');
 const config = require('../../consts/app');
-const formatFoodData = require('../../utils/openApi/formatFoodData');
+const formatFoodData = require('../../utils/openApi/fetchFoodData');
 
 class FoodController {
   async getPetFood(req, res, next) {

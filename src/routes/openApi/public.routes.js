@@ -4,7 +4,7 @@ const { getFuneralData } = require('../../controllers/openApi/funeral.controller
 const kakaoController = require('../../controllers/openApi/kakao.controller');
 const { getMedicalData } = require('../../controllers/openApi/medical.controller');
 const placeController = require('../../controllers/openApi/place.controller');
-
+const walkController = require('../../controllers/openApi/walk.controller');
 
 const publicRoutes = require('express').Router();
 
@@ -19,5 +19,8 @@ publicRoutes.get("/food", foodController.getPetFood);
 publicRoutes.get("/kakao/coordinates", kakaoController.getCoordinates); // /public/kakao/coordinates
 // 카카오 지도 스크립트 URL
 publicRoutes.get("/kakao/map-script", kakaoController.getMapScriptUrl); // /public/kakao/map-script
+
+publicRoutes.post("/walk", walkController.saveWalk);
+publicRoutes.get("/walks/:userId", walkController.getUserWalks);
 
 module.exports = publicRoutes;

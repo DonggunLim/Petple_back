@@ -1,7 +1,7 @@
 const axios = require("axios");
 const config = require("../../consts/app");
 const { createError } = require("../../utils/error");
-const formatMedicalData = require("../../utils/openApi/formatMedicalData");
+const formatMedicalData = require("../../utils/openApi/fetchMedicalData");
 
 const apiUrls = {
   경기: {
@@ -20,11 +20,11 @@ class MedicalController {
       const { region, type } = req.query;
 
       if (!region || !type) {
-        throw createError(400, "지역과 종류(type)가 필요합니다.");
+        next(createError(400, "지역과 종류(type)가 필요합니다."));
       }
 
       if (!apiUrls[region]?.[type]) {
-        throw createError(400, "유효한 지역 또는 유형이 아닙니다.");
+        next(createError(400, "유효한 지역 또는 유형이 아닙니다."));
       }
 
       const response = await axios.get(apiUrls[region][type]);

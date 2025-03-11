@@ -1,3 +1,5 @@
+const kakaoController = require("../../controllers/openApi/kakao.controller");
+
 const getValue = (field) => field?.trim() ?? "정보 없음";
 const formatMedicalData = async (data, region) => {
   const seen = new Set();
