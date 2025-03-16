@@ -72,7 +72,7 @@ class OauthController {
           maxAge: 60 * 60 * 1000,
           secure: true,
           sameSite: 'None',
-          domain: 'https://petple-front.vercel.app/',
+          domain: 'petple-front.vercel.app',
           path: '/', //모든 경로에 쿠키포함
         });
 
@@ -96,7 +96,7 @@ class OauthController {
         maxAge: 60 * 60 * 1000,
         secure: true,
         sameSite: 'None',
-        domain: 'https://petple-front.vercel.app/',
+        domain: 'petple-front.vercel.app',
         path: '/', //모든 경로에 쿠키포함
       });
 
