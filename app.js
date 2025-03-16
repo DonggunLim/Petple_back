@@ -16,7 +16,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use();
+app.use(cors());
 
 //라우터
 app.use('/api/my', userRoutes);
