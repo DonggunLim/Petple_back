@@ -70,6 +70,9 @@ class OauthController {
         res.cookie('loginStatus', 'true', {
           httpOnly: false,
           maxAge: 60 * 60 * 1000,
+          sameSite: 'none',
+          secure: true,
+          domain: 'petple-front.vercel.app',
           path: '/', //모든 경로에 쿠키포함
         });
 
@@ -91,6 +94,9 @@ class OauthController {
       res.cookie('loginStatus', 'true', {
         httpOnly: false,
         maxAge: 60 * 60 * 1000,
+        sameSite: 'none',
+        secure: true,
+        domain: 'petple-front.vercel.app',
         path: '/', //모든 경로에 쿠키포함
       });
 

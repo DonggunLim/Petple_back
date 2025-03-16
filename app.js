@@ -16,7 +16,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(cors());
+app.use(
+  cors({
+    origin: 'https://petple-front.vercel.app',
+    credentials: true,
+  }),
+);
 
 //라우터
 app.use('/api/my', userRoutes);
