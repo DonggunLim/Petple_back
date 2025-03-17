@@ -23,17 +23,6 @@ app.use(
   }),
 );
 
-app.get('/api/set-cookie', (req, res) => {
-  res.cookie('loginStatus', 'true', {
-    httpOnly: false,
-    maxAge: 60 * 60 * 1000,
-    sameSite: 'None',
-    secure: true,
-    path: '/',
-  });
-  res.send('쿠키 설정 완료');
-});
-
 //라우터
 app.use('/api/my', userRoutes);
 app.use('/api/oauth', oauthRoutes);
