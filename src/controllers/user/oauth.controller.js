@@ -63,6 +63,8 @@ class OauthController {
 
         res.cookie('token', token, {
           httpOnly: true,
+          sameSite: 'None',
+          secure: true,
           maxAge: 60 * 60 * 1000,
           path: '/',
         });
@@ -85,6 +87,8 @@ class OauthController {
 
       res.cookie('token', token, {
         httpOnly: true,
+        sameSite: 'None',
+        secure: true,
         maxAge: 60 * 60 * 1000,
         path: '/',
       });
