@@ -67,14 +67,14 @@ class OauthController {
           path: '/',
         });
 
-        res.cookie('loginStatus', 'true', {
-          httpOnly: false,
-          maxAge: 60 * 60 * 1000,
-          secure: true,
-          path: '/', //모든 경로에 쿠키포함
-        });
+        // res.cookie('loginStatus', 'true', {
+        //   httpOnly: false,
+        //   maxAge: 60 * 60 * 1000,
+        //   secure: true,
+        //   path: '/', //모든 경로에 쿠키포함
+        // });
 
-        return res.redirect(config.app.frontUrl);
+        return res.json({ isSuccess: true, loginStatus: true });
       }
 
       // 로그인한 기록이 있는 유저이면 로그인
@@ -89,14 +89,14 @@ class OauthController {
         path: '/',
       });
 
-      res.cookie('loginStatus', 'true', {
-        httpOnly: false,
-        maxAge: 60 * 60 * 1000,
-        secure: true,
-        path: '/', //모든 경로에 쿠키포함
-      });
+      // res.cookie('loginStatus', 'true', {
+      //   httpOnly: false,
+      //   maxAge: 60 * 60 * 1000,
+      //   secure: true,
+      //   path: '/', //모든 경로에 쿠키포함
+      // });
 
-      return res.redirect(config.app.frontUrl);
+      return res.json({ isSuccess: true, loginStatus: true });
     } catch (error) {
       next(error);
     }
