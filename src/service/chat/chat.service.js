@@ -2,12 +2,12 @@ const Chat = require('../../schemas/chat/chat.schema');
 const { createError } = require('../../utils/error');
 
 class ChatService {
-  async addMessageToChat({ roomId, text, from, to }) {
+  async addMessageToChat({ roomId, messages }) {
     try {
       await Chat.findOneAndUpdate(
         { roomId },
         {
-          $push: { messages: { text, from, to } },
+          $push: { messages: { $each: messages } },
         },
         { upsert: true },
       );
