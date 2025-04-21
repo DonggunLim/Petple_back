@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "nodemon index.js"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.744.0",
     "@aws-sdk/s3-request-presigner": "^3.744.0",
@@ -13,5 +16,8 @@
     "request": "^2.88.2",
     "socket.io": "^4.8.1",
     "xml-js": "^1.6.11"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
   }
 }
