@@ -1,5 +1,5 @@
 const ChatService = require('../service/chat/chat.service');
-
+const AlarmController = require('../controllers/alarm/alarm.controller');
 const ChatNamespace = (io) => {
   const chatNamespace = io.of('/chat');
   const mapRoomIdToMessages = {};
@@ -39,9 +39,16 @@ const ChatNamespace = (io) => {
       mapRoomIdToMessages[roomId].push(message);
 
       chatNamespace.to(roomId).emit('receive_message', { text, from, to });
+      AlarmController.sendAlarm({
+        uid: Date.now(),
+        userId: to.id,
+        type: 'chat',
+        content: text,
+        from: { nickName: from.nickName, id: from.id },
+        isRead: false,
+      });
 
       if (mapRoomIdToMessages[roomId].length === 10) {
-        console.log(mapRoomIdToMessages[roomId]);
         saveMessages(roomId, mapRoomIdToMessages[roomId]);
       }
     });
