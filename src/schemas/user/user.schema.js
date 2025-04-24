@@ -1,7 +1,4 @@
 const mongoose = require('mongoose');
-const {
-  getCoordinates,
-} = require('../../controllers/openApi/kakao.controller');
 const { ObjectId } = mongoose.Schema.Types;
 
 const userSchema = new mongoose.Schema(
