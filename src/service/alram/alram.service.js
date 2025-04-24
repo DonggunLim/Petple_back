@@ -8,7 +8,7 @@ class AlarmService {
         { userId },
         '-_id -__v -updatedAt -userId',
       ) //
-        .populate('from', 'nickName -_id')
+        .populate('from', 'nickName profileImage -_id')
         .lean();
       return alarms;
     } catch (error) {

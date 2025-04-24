@@ -42,7 +42,10 @@ class AlarmController {
     const { userId, ...rest } = alarm;
     const filterd = {
       ...rest,
-      from: { nickName: alarm.from.nickName },
+      from: {
+        nickName: alarm.from.nickName,
+        profileImage: alarm.from.profileImage,
+      },
       createdAt: document.createdAt,
     };
     if (client) {

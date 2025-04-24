@@ -44,7 +44,11 @@ const ChatNamespace = (io) => {
         userId: to.id,
         type: 'chat',
         content: text,
-        from: { nickName: from.nickName, id: from.id },
+        from: {
+          nickName: from.nickName,
+          id: from.id,
+          profileImage: from.profileImage,
+        },
         isRead: false,
       });
 
