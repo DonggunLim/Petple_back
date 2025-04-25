@@ -30,6 +30,10 @@ const alarmSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    expiredAt: {
+      type: Date,
+      required: false,
+    },
   },
   {
     timestamps: true,

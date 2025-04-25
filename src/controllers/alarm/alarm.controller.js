@@ -38,6 +38,7 @@ class AlarmController {
     const document = await AlarmService.addAlarms({
       ...alarm,
       from: alarm.from.id,
+      expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
     });
     const { userId, ...rest } = alarm;
     const filterd = {
