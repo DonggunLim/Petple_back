@@ -1,18 +1,32 @@
 const ChatService = require('../service/chat/chat.service');
 const AlarmController = require('../controllers/alarm/alarm.controller');
+
+const mapRoomToUsers = new Map();
+const mapRoomToMessages = new Map();
+
 const ChatNamespace = (io) => {
   const chatNamespace = io.of('/chat');
-  const mapRoomIdToMessages = {};
-  const mapSocketIdToRoomId = {};
 
   chatNamespace.on('connection', (socket) => {
-    const socketId = socket.id;
+    const { userId, nickname, currentRoomId } = socket.handshake.query;
 
-    socket.on('join_room', async (roomId) => {
-      socket.join(roomId);
-      mapSocketIdToRoomId[socketId] = roomId; // 연결된 소켓유저가 join한 roomId
-      const unSavedMessages = mapRoomIdToMessages[roomId]; // 데이터베이스에 저장되지않은 roomId messages
+    socket.on('join_room', async (room) => {
+      socket.join(room);
+      socket.room = room;
 
+      // 방이 없다면 만들기
+      if (!mapRoomToUsers.get(room)) {
+        mapRoomToUsers.set(room, []);
+      }
+      // 방에 유저 추가
+      mapRoomToUsers
+        .get(room)
+        .push({ userId, nickname, currentRoomId, socketId: socket.id });
+
+      // 데이터베이스에 저장되지않은 room messages
+      const unSavedMessages = mapRoomToMessages.get(room);
+
+      // 데이터베이스에 저장되지않은 메시지가 있다면 전송
       if (unSavedMessages) {
         socket.emit(
           'prev_message',
@@ -33,12 +47,20 @@ const ChatNamespace = (io) => {
         createdAt: new Date(),
         originalData: { text, from, to },
       };
-      if (!mapRoomIdToMessages[roomId]) {
-        mapRoomIdToMessages[roomId] = [];
-      }
-      mapRoomIdToMessages[roomId].push(message);
 
+      // room에 메시지 배열이 없다면 만들기
+      if (!mapRoomToMessages.get(roomId)) {
+        mapRoomToMessages.set(roomId, []);
+      }
+
+      // 배열에 메시지 추가
+      mapRoomToMessages.get(roomId).push(message);
+
+      // 방에 메시지 전송
       chatNamespace.to(roomId).emit('receive_message', { text, from, to });
+
+      // 알림 전송
+      // 현재 채팅에 참여한 유저에게는 알림이 가지 않게 예외처리 필요
       AlarmController.sendAlarm({
         uid: Date.now(),
         userId: to.id,
@@ -52,21 +74,26 @@ const ChatNamespace = (io) => {
         isRead: false,
       });
 
-      if (mapRoomIdToMessages[roomId].length === 10) {
-        saveMessages(roomId, mapRoomIdToMessages[roomId]);
+      // 메시지 배열이 10개 이상이면 DB 저장
+      if (mapRoomToMessages.get(roomId).length === 10) {
+        saveMessages(roomId, mapRoomToMessages.get(roomId));
       }
     });
 
     socket.on('disconnect', async () => {
-      const roomId = mapSocketIdToRoomId[socketId];
-      const unSavedMessages = mapRoomIdToMessages[roomId];
+      // 연결이 끊어진 유저 정보를 방에서 삭제
+      const updatedUsers = mapRoomToUsers
+        .get(socket.room)
+        .filter((user) => user.socketId !== socket.id);
+      mapRoomToUsers.set(socket.room, updatedUsers);
 
-      if (!roomId || !unSavedMessages) {
-        return;
+      const currentRoomUsersCount = mapRoomToUsers.get(socket.room).length;
+      const unSavedMessages = mapRoomToMessages.get(socket.room);
+
+      // 방에 유저가 없고 데이터베이스에 저장되지않은 메시지가 있다면 DB 저장
+      if (currentRoomUsersCount === 0 && unSavedMessages) {
+        saveMessages(socket.room, unSavedMessages);
       }
-
-      saveMessages(roomId, unSavedMessages);
-      delete mapSocketIdToRoomId[socketId];
     });
   });
 
@@ -76,7 +103,7 @@ const ChatNamespace = (io) => {
       messages: unSavedMessages,
     });
 
-    delete mapRoomIdToMessages[roomId];
+    mapRoomToMessages.set(roomId, []);
   };
 };
 
