@@ -40,6 +40,14 @@ class AlarmService {
       createError(500, '[DB에러 AlarmService.deleteAlarms]');
     }
   }
+
+  async deleteExpiredAlarms() {
+    try {
+      await Alarms.deleteMany({ expiredAt: { $lt: new Date() } });
+    } catch (error) {
+      createError(500, '[DB에러 AlarmService.deleteExpiredAlarms]');
+    }
+  }
 }
 
 module.exports = new AlarmService();

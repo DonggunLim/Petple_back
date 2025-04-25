@@ -4,10 +4,17 @@ const app = require('./app');
 const SocketConfig = require('./src/socket/index');
 const ChatNamespace = require('./src/socket/chat.socket');
 const server = http.createServer(app);
+const schedule = require('node-schedule');
 
+// Socket 설정
 const io = SocketConfig.init(server);
 ChatNamespace(io);
 
-server.listen(config.app.port, () =>
-  console.log(`Express Running on ${config.app.port}`),
-);
+server.listen(config.app.port, () => {
+  console.log(`Express Server Running on ${config.app.port}`);
+
+  schedule.scheduleJob('0 0 * * *', () => {
+    console.log(`delete expired alarms ${new Date()}`);
+    AlarmService.deleteExpiredAlarms();
+  });
+});
