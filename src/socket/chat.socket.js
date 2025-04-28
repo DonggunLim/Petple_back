@@ -8,7 +8,7 @@ const ChatNamespace = (io) => {
   const chatNamespace = io.of('/chat');
 
   chatNamespace.on('connection', (socket) => {
-    const { userId, nickname, currentRoomId } = socket.handshake.query;
+    const { userId, nickname } = socket.handshake.query;
 
     socket.on('join_room', async (room) => {
       socket.join(room);
@@ -19,9 +19,7 @@ const ChatNamespace = (io) => {
         mapRoomToUsers.set(room, []);
       }
       // 방에 유저 추가
-      mapRoomToUsers
-        .get(room)
-        .push({ userId, nickname, currentRoomId, socketId: socket.id });
+      mapRoomToUsers.get(room).push({ userId, nickname, socketId: socket.id });
 
       // 데이터베이스에 저장되지않은 room messages
       const unSavedMessages = mapRoomToMessages.get(room);
@@ -60,19 +58,21 @@ const ChatNamespace = (io) => {
       chatNamespace.to(roomId).emit('receive_message', { text, from, to });
 
       // 알림 전송
-      // 현재 채팅에 참여한 유저에게는 알림이 가지 않게 예외처리 필요
-      AlarmController.sendAlarm({
-        uid: Date.now(),
-        userId: to.id,
-        type: 'chat',
-        content: text,
-        from: {
-          nickName: from.nickName,
-          id: from.id,
-          profileImage: from.profileImage,
-        },
-        isRead: false,
-      });
+      // 방에 참여한 유저가없는 경우에만 알림 전송
+      if (mapRoomToUsers.get(roomId).every((user) => user.userId !== to.id)) {
+        AlarmController.sendAlarm({
+          uid: Date.now(),
+          userId: to.id,
+          type: 'chat',
+          content: text,
+          from: {
+            nickName: from.nickName,
+            id: from.id,
+            profileImage: from.profileImage,
+          },
+          isRead: false,
+        });
+      }
 
       // 메시지 배열이 10개 이상이면 DB 저장
       if (mapRoomToMessages.get(roomId).length === 10) {
