@@ -146,18 +146,17 @@ class PostController {
 
   async getUserPosts(req, res, next) {
     const { page } = req.query;
-    const { nickName } = req.params;
+    const { nickname } = req.params;
 
     const pageSize = 9;
 
-    const user = await UserService.findUserByNickname(nickName);
-    if (!user) {
-      throw createError(404, '유저 정보가 없습니다.');
-    }
-
-    const userId = user._id;
-
     try {
+      const user = await UserService.findUserByNickname(nickname);
+      if (!user) {
+        throw createError(404, '유저 정보가 없습니다.');
+      }
+
+      const userId = user._id;
       const userPosts = await UserService.userPost(userId, page, pageSize);
 
       return res.status(200).json({
@@ -172,17 +171,16 @@ class PostController {
 
   async getUserLikePosts(req, res, next) {
     const { page } = req.query;
-    const { nickName } = req.params;
+    const { nickname } = req.params;
     const pageSize = 9;
 
-    const user = await UserService.findUserByNickname(nickName);
-    if (!user) {
-      throw createError(404, '유저 정보가 없습니다.');
-    }
-
-    const userId = user._id;
-
     try {
+      const user = await UserService.findUserByNickname(nickname);
+      if (!user) {
+        throw createError(404, '유저 정보가 없습니다.');
+      }
+
+      const userId = user.id;
       const likePosts = await UserService.likePost(userId, page, pageSize);
 
       return res.status(200).json({

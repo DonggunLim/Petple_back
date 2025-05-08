@@ -32,7 +32,7 @@ app.use('/api/posts', postsRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/chat', chatRoutes);
-app.use('/api/alarms', alarmRoutes);
+// app.use('/api/alarms', alarmRoutes);
 
 //에러핸들러
 app.use(errorHandler);

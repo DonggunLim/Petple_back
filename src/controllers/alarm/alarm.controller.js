@@ -5,7 +5,7 @@ const sseClients = new Map();
 
 class AlarmController {
   connectAlarm(req, res) {
-    const { _id: userId } = req.user;
+    const { id: userId } = req.user;
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',

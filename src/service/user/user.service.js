@@ -1,79 +1,130 @@
-const users = require('../../schemas/user/user.schema');
-const pets = require('../../schemas/pet/pet.schema');
+const config = require('../../consts/app');
 const { createError } = require('../../utils/error');
 const posts = require('../../schemas/post/post.schema');
-const config = require('../../consts/app');
+const pets = require('../../schemas/pet/pet.schema');
+const users = require('../../schemas/user/user.schema');
+
+const promisePool = require('../../config/mysql.config');
 
 class UserService {
-  async createUser(userData) {
+  async createUser({ name, email, nickName, profileImage, provider }) {
+    const sql = `INSERT INTO users 
+    (name, email, nickname, profileImage, provider)
+    VALUES
+    (?, ?, ?, ?, ?)
+    `;
+    const values = [name, email, nickName, profileImage, provider];
+
     try {
-      const newUser = await users.create(userData);
-      return newUser.toObject();
+      const result = await promisePool.query(sql, values);
+      return result[0].inserId;
     } catch (error) {
       throw Error('유저생성 실패' + error.message);
     }
   }
 
-  async updateUser(userEmail, userData) {
+  async updateUser(email, { nickname, profileImage, jibunAddress, lng, lat }) {
+    const sql = `UPDATE users
+      SET 
+        nickname = ?,
+        profileImage = ?,
+        jibun_address = ?,
+        location_coordinates_lat = ?,
+        location_coordinates_lng = ?
+      WHERE email = ?
+    `;
+    const values = [nickname, profileImage, jibunAddress, lat, lng, email];
     try {
-      const update = await users.findOneAndUpdate(
-        { email: userEmail },
-        userData,
-        {
-          new: true,
-        },
-      );
-      return update;
+      await promisePool.query(sql, values);
     } catch (error) {
       throw Error('유저 정보 업데이트 실패' + error.message);
     }
   }
 
-  async createPet(petData) {
+  async createPet({ name, age, breed, image, userId }) {
+    const sql = `
+      INSERT INTO pets
+        (name, age, breed, image, user_id)
+      VALUES
+        (?, ?, ?, ?, ?)
+    `;
+    const values = [name, age, breed, image, userId];
     try {
-      const newPet = await pets.create(petData);
-      return newPet.toObject();
+      await promisePool.query(sql, values);
     } catch (error) {
-      throw Error('유저펫 생성 실패' + error.message);
+      throw createError(500, '[DB에러] UserService.createPet');
     }
   }
 
-  async updatePet(petId, petData) {
+  async updatePet(petId, { name, age, breed, image }) {
+    const sql = `
+      UPDATE pets
+      SET 
+        name = ?,
+        age = ?,
+        breed = ?,
+        image = ?
+      WHERE id = ?
+    `;
+    const values = [name, age, breed, image, petId];
     try {
-      const update = await pets.findOneAndUpdate({ _id: petId }, petData, {
-        new: true,
-      });
-      return update.toObject();
+      await promisePool.query(sql, values);
     } catch (error) {
       throw Error('유저 펫 정보 업데이트 실패' + error.message);
     }
   }
 
-  async findByEmail(userEmail) {
-    const user = await users
-      .findOne({ email: userEmail })
-      .populate('userPet')
-      .populate('address');
-    return user;
+  async findByEmail(email) {
+    const sql = `SELECT * FROM users WHERE email = ?`;
+    const petSql = 'SELECT * FROM pets WHERE user_id = ?';
+    const values = [email];
+    try {
+      const [userRow] = await promisePool.query(sql, values);
+      if (!userRow.length) {
+        throw createError(404, '유저를 찾을수 없습니다.');
+      }
+      const user = userRow[0];
+      const [petRows] = await promisePool.query(petSql, [user.id]);
+      return { ...user, pets: petRows };
+    } catch (error) {
+      throw createError(500, '[DB 에러] UserService.findByEmail');
+    }
   }
 
   async findById(userId) {
-    const user = await users.findOne({ _id: userId });
-    return user;
+    const sql = `
+      SELECT * FROM users WHERE id = ?
+    `;
+    try {
+      const [userRow] = await promisePool.query(sql, [userId]);
+      return userRow[0];
+    } catch (error) {
+      throw createError(500, '[DB에러] UserService.findById');
+    }
   }
 
   async findByKakaoId(kakaoId) {
-    const user = await users.findOne({ kakaoId: kakaoId });
-    return user;
+    const sql = `SELECT * FROM users WHERE kakaoId = ?`;
+    try {
+      const [userRow] = await promisePool.query(sql, [kakaoId]);
+      return userRow[0];
+    } catch (error) {
+      throw createError(500, '[DB에러] UserService.findByKakaoId');
+    }
   }
 
-  async duplication(userNickName) {
-    const nickName = await users.findOne({ nickName: userNickName }).lean();
-
-    if (nickName) {
-      return false;
+  async duplication(userNickname) {
+    const sql = `SELECT * FROM users WHERE nickname = ?`;
+    try {
+      const [userRow] = await promisePool.query(sql, [userNickname]);
+      const isExistedNickname = !!userRow[0]?.nickname;
+      if (isExistedNickname) {
+        return false;
+      }
+      return true;
+    } catch (error) {
+      throw createError(500, `[DB에러] UserService.duplication`);
     }
-    return true;
   }
 
   async createNickname(userName) {
@@ -101,7 +152,10 @@ class UserService {
 
       const randomEmail = `${randomString}@elice.com`;
 
-      const existingEmail = await users.findOne({ email: randomEmail }).lean();
+      const sql = `SELECT email FROM users WHERE email = ?`;
+
+      const [row] = await promisePool.query(sql, [randomEmail]);
+      const existingEmail = row[0]?.email;
 
       if (!existingEmail) {
         return randomEmail;
@@ -114,75 +168,117 @@ class UserService {
   }
 
   async findUsersByLocation(lng, lat) {
+    const sql = `
+      SELECT 
+        u.id,
+        u.name,
+        u.nickname,
+        u.email,
+        u.profileImage,
+        u.jibun_address,
+        u.profileImage,
+        u.location_coordinates_lat,
+        u.location_coordinates_lng,
+        u.created_at,
+        u.updated_at,
+        p.id AS petId,
+        p.name AS petName,
+        p.age AS petAge,
+        p.breed AS petBreed,
+        p.image AS petImage
+      FROM users u
+      JOIN pets p ON u.id = p.user_id
+      WHERE 
+        ST_Distance_Sphere(
+          POINT(location_coordinates_lng, location_coordinates_lat),
+          POINT(?, ?)
+        ) <= 3000 
+    `;
+    const userMap = new Map();
     try {
-      const documents = await users
-        .find(
-          {
-            'address.location': {
-              $near: {
-                $geometry: {
-                  type: 'Point',
-                  coordinates: [lng, lat],
-                },
-                $maxDistance: 3000,
-              },
-            },
-          },
-          '-userType -createdAt -updatedAt -__v',
-        )
-        .populate('userPet', '-_id -__v')
-        .lean();
-      return documents;
+      const [userRows] = await promisePool.query(sql, [lng, lat]);
+      for (const row of userRows) {
+        const userId = row.id;
+        const { petName, petAge, petBreed, petImage, petId, ...rest } = row;
+
+        if (!userMap.has(userId)) {
+          userMap.set(userId, {
+            ...rest,
+            pets: [],
+          });
+        }
+        userMap.get(userId).pets.push({
+          name: petName,
+          age: petAge,
+          breed: petBreed,
+          image: petImage,
+        });
+      }
+      const users = [...userMap.values()];
+      return users;
     } catch (error) {
       throw createError(500, '[DB에러 UserService.findByUsersByLocation]');
     }
   }
 
   async userPost(userId, page, pageSize) {
+    const offset = (page - 1) * pageSize;
+    const sql = `
+      SELECT * FROM posts p
+      JOIN users u ON p.creator_id = u.id
+      WHERE p.creator_id = ?
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+    const countSql = `
+      SELECT COUNT(*) AS total
+      FROM posts
+      WHERE creator_id = ?
+    `;
     try {
-      const skipPosts = (page - 1) * pageSize;
-      const userPosts = await posts
-        .find({ creator: userId })
-        .sort({ createdAt: -1 })
-        .skip(skipPosts)
-        .limit(pageSize)
-        .lean();
+      const [posts] = await promisePool.query(sql, [userId, pageSize, offset]);
+      const [[{ total }]] = await promisePool.query(countSql, [userId]);
 
-      const totalPosts = await posts.countDocuments({ creator: userId });
-      const totalPages = Math.ceil(totalPosts / pageSize);
-
-      return { posts: userPosts, totalPages };
+      const totalPages = Math.ceil(total / pageSize);
+      return { posts, totalPages };
     } catch (error) {
-      throw Error(error.message);
+      throw createError(500, `[DB에러 UserService.userPost] ${error.message}`);
     }
   }
 
   async likePost(userId, page, pageSize) {
+    const offset = (page - 1) * pageSize;
+    const sql = `SELECT * FROM posts p
+      JOIN post_likes pl ON p.id = pl.post_id
+      WHERE pl.user_id = ?
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+    const countSql = `
+      SELECT COUNT(*) AS total
+      FROM post_likes
+      WHERE user_id = ?
+    `;
+
     try {
-      const skipPosts = (page - 1) * pageSize;
-      const likesPost = await posts
-        .find({ likes: userId })
-        .sort({ createdAt: -1 })
-        .skip(skipPosts)
-        .limit(pageSize)
-        .lean();
-
-      const totalPosts = await posts.countDocuments({ likes: userId });
-      const totalPages = Math.ceil(totalPosts / pageSize);
-
-      return { posts: likesPost, totalPages };
+      const [posts] = await promisePool.query(sql, [userId, pageSize, offset]);
+      const [[{ total }]] = await promisePool.query(countSql, [userId]);
+      const totalPages = Math.ceil(total / pageSize);
+      return { posts, totalPages };
     } catch (error) {
-      throw Error(error.message);
+      throw createError(
+        500,
+        `[DB에러 UserService.findUserByNickname] ${error.message}`,
+      );
     }
   }
 
-  async findUserByNickname(nickName) {
+  async findUserByNickname(nickname) {
+    const sql = `SELECT * FROM users WHERE nickname = ?`;
+    const values = [nickname];
     try {
-      const document = await users
-        .findOne({ nickName }, 'userPet nickName name profileImage')
-        .populate('userPet', '-__v -_id')
-        .lean();
-      return document;
+      const [user] = await promisePool.query(sql, values);
+      return user[0];
     } catch (error) {
       throw createError(500, '[DB에러 UserService.findUserByNickname]');
     }

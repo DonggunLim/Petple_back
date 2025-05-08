@@ -1,21 +1,19 @@
-const jwt = require('jsonwebtoken');
 const { verifyToken } = require('../consts/token');
-const { findByEmail } = require('../service/user/user.service');
+const UserService = require('../service/user/user.service');
 const { createError } = require('../utils/error');
 
 const token = async (req, res, next) => {
   try {
     const { token } = req.cookies;
-
     if (!token) {
       throw createError(401, '토큰이 존재하지 않습니다.');
     }
 
-    const decodedToken = await verifyToken(token);
+    const decodedToken = verifyToken(token);
 
     const email = decodedToken.email;
 
-    const user = await findByEmail(email);
+    const user = await UserService.findByEmail(email);
     if (!user) {
       throw createError(404, '유저가 존재하지 않습니다.');
     }
