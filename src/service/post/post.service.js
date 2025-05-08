@@ -152,6 +152,7 @@ class PostService {
       SELECT
         c.id,
         c.post_id,
+        c.parent_id,
         c.content,
         c.created_at,
         u.id AS userId,
@@ -185,18 +186,31 @@ class PostService {
       } = post;
       const creator = { id: userId, email, name, nickname, profileImage };
 
-      const comments = commentRows.map(
-        ({ userId, name, email, nickname, profileImage, ...rest }) => ({
-          creator: {
-            id: userId,
-            name,
-            email,
-            nickname,
-            profileImage,
-          },
+      const commentMap = new Map();
+      const comments = [];
+
+      for (const row of commentRows) {
+        const { userId, name, email, nickname, profileImage, ...rest } = row;
+
+        const comment = {
           ...rest,
-        }),
-      );
+          creator: { id: userId, name, email, nickname, profileImage },
+          replies: [],
+        };
+
+        commentMap.set(comment.id, comment);
+      }
+
+      for (const comment of commentMap.values()) {
+        if (comment.parent_id) {
+          const parentComment = commentMap.get(comment.parent_id);
+          if (parentComment) {
+            parentComment.replies.push(comment);
+          }
+        } else {
+          comments.push(comment);
+        }
+      }
 
       return {
         ...postRest,
