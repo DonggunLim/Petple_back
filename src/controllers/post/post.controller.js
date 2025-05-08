@@ -98,7 +98,6 @@ class PostController {
         return next(createError(401, '게시글 삭제 권한이 없습니다.'));
       }
       await PostService.deletePostById(postId);
-      // await CommentService.deleteCommentsByPostId(postId);
       return res
         .status(204)
         .json({ success: true, message: '게시글 삭제 성공' });

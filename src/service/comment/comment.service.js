@@ -1,108 +1,58 @@
 const Comment = require('../../schemas/comment/comment.schema');
 const { createError } = require('../../utils/error');
+const promisePool = require('../../config/mysql.config');
 
 class CommentService {
-  async getCommentById(id) {
+  async addComment(user_id, post_id, parent_id, content) {
+    const sql = `
+      INSERT INTO
+        comments
+        (user_id, post_id, parent_id, content)
+      VALUES
+        (?, ?, ?, ?)
+    `;
     try {
-      const document = await Comment.findById(id).lean();
-      return document;
+      const [commentRow] = await promisePool.query(sql, [
+        user_id,
+        post_id,
+        parent_id ?? null,
+        content,
+      ]);
+      return commentRow.insertId;
     } catch (error) {
-      throw createError(500, `[DB에러] CommentService.getCommentById`);
-    }
-  }
-
-  async addComment(creator, post, description, hasParent) {
-    try {
-      const document = await Comment.create({
-        creator,
-        post,
-        description,
-        hasParent,
-      });
-      return document.toObject();
-    } catch (error) {
-      throw new Error(`[DB에러] CommentService.addComment`, { cause: error });
+      throw createError(`[DB에러] CommentService.addComment ${error.message}`);
     }
   }
 
   async deleteComment(id) {
+    const sql = `
+      DELETE FROM
+        comments
+      WHERE id = ?
+    `;
     try {
-      await Comment.findByIdAndDelete(id);
+      await promisePool.query(sql, [id]);
     } catch (error) {
-      throw new Error(`[DB에러] CommentService.deleteComment`, {
-        cause: error,
-      });
-    }
-  }
-
-  async deleteCommentsByPostId(postId) {
-    try {
-      await Comment.deleteMany({ post: postId });
-    } catch (error) {
-      throw createError(500, `[DB에러] CommentService.getCommentById`);
-    }
-  }
-
-  async updateComment(id, description) {
-    try {
-      await Comment.findByIdAndUpdate(id, { description });
-    } catch (error) {
-      throw new Error(`[DB에러] CommentService.updateComment`, {
-        cause: error,
-      });
-    }
-  }
-
-  async addReply(
-    commentId,
-    { _id: creatorId, name, nickName, profileImage, email, description, tag },
-  ) {
-    try {
-      const document = await Comment.findByIdAndUpdate(commentId, {
-        $push: {
-          replies: {
-            creatorId,
-            name,
-            nickName,
-            profileImage,
-            email,
-            description,
-            tag,
-          },
-        },
-      }) //
-        .lean();
-      return document;
-    } catch (error) {
-      throw new Error(`[DB에러] CommentService.addReply`, { cause: error });
-    }
-  }
-
-  async deleteReply(commentId, replyId) {
-    try {
-      await Comment.findByIdAndUpdate(commentId, {
-        $pull: { replies: { _id: replyId } },
-      });
-    } catch (error) {
-      throw new Error('[DB에러] CommentService.deleteReply', { cause: error });
-    }
-  }
-
-  async updateReply(commentId, replyId, description) {
-    try {
-      await Comment.findOneAndUpdate(
-        {
-          _id: commentId,
-          'replies._id': replyId,
-        },
-        {
-          $set: {
-            'replies.$.description': description,
-          },
-        },
+      throw createError(
+        500,
+        `[DB에러] CommentService.deleteComment ${error.message}`,
       );
+    }
+  }
+
+  async updateComment(id, content) {
+    const sql = `
+      UPDATE 
+        comments
+      SET
+        content = ?
+      WHERE
+        id = ?
+    `;
+    try {
+      await promisePool.query(sql, [content, id]);
     } catch (error) {
-      throw new Error('[DB에러] CommentService.updateReply', { cause: error });
+      throw new Error(`[DB에러] CommentService.updateComment ${error.message}`);
     }
   }
 }

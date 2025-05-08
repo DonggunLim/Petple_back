@@ -4,17 +4,7 @@ const { token } = require('../../middleware/token.middleware');
 const commentRoutes = require('express').Router();
 
 commentRoutes.post('/', token, CommentController.addComment);
-commentRoutes.patch('/:id', token, CommentController.updateComment);
-commentRoutes.post('/replies', token, CommentController.addReply);
-commentRoutes.delete(
-  '/:commentId/replies/:replyId',
-  token,
-  CommentController.deleteReply,
-);
-commentRoutes.patch(
-  '/:commentId/replies/:replyId',
-  token,
-  CommentController.updateReply,
-);
+commentRoutes.put('/:id', token, CommentController.updateComment);
+commentRoutes.delete('/:id', token, CommentController.deleteComment);
 
 module.exports = commentRoutes;
