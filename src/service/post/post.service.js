@@ -150,7 +150,13 @@ class PostService {
     `;
     const commentSql = `
       SELECT
-        c.*,
+        c.id,
+        c.post_id,
+        c.content,
+        c.created_at,
+        u.id AS userId,
+        u.name,
+        u.email,
         u.nickname,
         u.profileImage
       FROM 
@@ -167,8 +173,7 @@ class PostService {
       if (!post) {
         throw createError(404, '게시글 정보를 찾을 수 없습니다.');
       }
-      const [comments] = await promisePool.query(commentSql, [postId]);
-
+      const [commentRows] = await promisePool.query(commentSql, [postId]);
       const {
         userId,
         email,
@@ -179,6 +184,20 @@ class PostService {
         ...postRest
       } = post;
       const creator = { id: userId, email, name, nickname, profileImage };
+
+      const comments = commentRows.map(
+        ({ userId, name, email, nickname, profileImage, ...rest }) => ({
+          creator: {
+            id: userId,
+            name,
+            email,
+            nickname,
+            profileImage,
+          },
+          ...rest,
+        }),
+      );
+
       return {
         ...postRest,
         likedUserIds: likedUserIds
