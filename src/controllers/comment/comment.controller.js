@@ -4,14 +4,9 @@ const { createError } = require('../../utils/error');
 
 class CommentController {
   async addComment(req, res, next) {
-    const { _id: creator } = req.user;
-    const { postId, description, hasParent } = req.body;
-    if (
-      !postId ||
-      !description ||
-      hasParent === null ||
-      hasParent === undefined
-    ) {
+    const { id: creator } = req.user;
+    const { postId, description, parentId } = req.body;
+    if (!postId || !description) {
       throw createError(400, '댓글 작성에 필요한 정보가 필요합니다.');
     }
     try {
@@ -23,9 +18,7 @@ class CommentController {
         creator,
         postId,
         description,
-        hasParent,
       );
-      await PostService.updatePostCommentsField(postId, comment._id);
       return res.status(201).json({ success: true, comment });
     } catch (error) {
       next(error);
