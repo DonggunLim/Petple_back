@@ -15,7 +15,7 @@ class ChatController {
       if (!targetUser) {
         throw createError(404, '잘못 된 유저 정보 요청 입니다.');
       }
-      const roomId = [targetUser._id, user._id].sort().join('-');
+      const roomId = [targetUser.id, user.id].sort().join('-');
       const chat = await ChatService.findChatByRoomId(roomId);
 
       return res.status(200).json({ isSuccess: true, targetUser, chat });
