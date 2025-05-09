@@ -1,5 +1,5 @@
 const config = require('../../consts/app');
-const { createError } = require('../../utils/error');
+const { createError, AppError } = require('../../utils/error');
 const posts = require('../../schemas/post/post.schema');
 const pets = require('../../schemas/pet/pet.schema');
 const users = require('../../schemas/user/user.schema');
@@ -81,7 +81,7 @@ class UserService {
     try {
       const [userRow] = await promisePool.query(sql, values);
       if (!userRow.length) {
-        throw createError(404, '유저를 찾을수 없습니다.');
+        return null;
       }
       const user = userRow[0];
       const [petRows] = await promisePool.query(petSql, [user.id]);
