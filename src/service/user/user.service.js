@@ -187,7 +187,7 @@ class UserService {
         p.breed AS petBreed,
         p.image AS petImage
       FROM users u
-      JOIN pets p ON u.id = p.user_id
+      LEFT JOIN pets p ON u.id = p.user_id
       WHERE 
         ST_Distance_Sphere(
           POINT(location_coordinates_lng, location_coordinates_lat),
@@ -266,21 +266,48 @@ class UserService {
       const totalPages = Math.ceil(total / pageSize);
       return { posts, totalPages };
     } catch (error) {
-      throw createError(
-        500,
-        `[DB에러 UserService.findUserByNickname] ${error.message}`,
-      );
+      throw createError(500, `[DB에러 UserService.likePost] ${error.message}`);
     }
   }
 
   async findUserByNickname(nickname) {
-    const sql = `SELECT * FROM users WHERE nickname = ?`;
+    const sql = `
+    SELECT 
+      u.id, 
+      u.name, 
+      u.nickname, 
+      u.profileImage, 
+      (
+        SELECT JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'id', p.id,
+            'name', p.name,
+            'breed', p.breed,
+            'image', p.image
+          )
+        ) 
+        FROM 
+          pets p
+        WHERE 
+          p.user_id = u.id
+      ) AS pets
+    FROM 
+      users u
+    WHERE 
+      nickname = ?
+    `;
     const values = [nickname];
     try {
-      const [user] = await promisePool.query(sql, values);
-      return user[0];
+      const [[user]] = await promisePool.query(sql, values);
+      return {
+        ...user,
+        pets: user.pets ?? [],
+      };
     } catch (error) {
-      throw createError(500, '[DB에러 UserService.findUserByNickname]');
+      throw createError(
+        500,
+        `[DB에러 UserService.findUserByNickname] ${error.message}`,
+      );
     }
   }
 }
