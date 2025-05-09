@@ -18,9 +18,9 @@ class PostService {
         u.email,
         u.id AS userId,
         u.profileImage,
-        COUNT(pl.user_id) AS likesCount,
-        COUNT(c.id) AS commentsCount ,
-        GROUP_CONCAT(pl.user_id) AS likedUserIds
+        COUNT(DISTINCT pl.user_id) AS likesCount,
+        COUNT(DISTINCT c.id) AS commentsCount ,
+        GROUP_CONCAT(DISTINCT pl.user_id) AS likedUserIds
       FROM 
         posts p
       JOIN 
@@ -132,9 +132,9 @@ class PostService {
         u.name,
         u.nickname,
         u.profileImage,
-        COUNT(pl.user_id) AS likesCount,
-        COUNT(c.id) AS commentsCount,
-        GROUP_CONCAT(pl.user_id) AS likedUserIds
+        COUNT(DISTINCT pl.user_id) AS likesCount,
+        COUNT(DISTINCT c.id) AS commentsCount,
+        GROUP_CONCAT(DISTINCT pl.user_id) AS likedUserIds
       FROM 
         posts p
       JOIN 
@@ -174,6 +174,7 @@ class PostService {
       if (!post) {
         throw createError(404, '게시글 정보를 찾을 수 없습니다.');
       }
+      console.log(post);
       const [commentRows] = await promisePool.query(commentSql, [postId]);
       const {
         userId,
