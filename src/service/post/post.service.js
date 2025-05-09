@@ -174,7 +174,6 @@ class PostService {
       if (!post) {
         throw createError(404, '게시글 정보를 찾을 수 없습니다.');
       }
-      console.log(post);
       const [commentRows] = await promisePool.query(commentSql, [postId]);
       const {
         userId,
