@@ -126,13 +126,13 @@ class ChatService {
             id: from_user_id,
             nickname: from_nickname,
             profileImage: from_profile_image,
-            pets: from_pets,
+            pets: from_pets ?? [],
           },
           to: {
             id: to_user_id,
             nickname: to_nickname,
             profileImage: to_profile_image,
-            pets: to_pets,
+            pets: to_pets ?? [],
           },
         }),
       );
