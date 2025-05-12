@@ -1,0 +1,38 @@
+name: Petple-back docker deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-petple-back:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        # ec2 접속
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/petple-back
+
+            echo "📦 Git Pull"
+            git pull origin main
+
+            echo "🛠️ Docker Build"
+            docker build -t petple-backend .
+
+            echo "🧹 Stop & Remove Old Container"
+            docker stop petple-backend || true
+            docker rm petple-backend || true
+
+            echo "🚀 Run New Container"
+            docker run -d \
+              --name petple-backend \
+              -p 3000:3000 \
+              --env-file .env \
+              petple-backend
