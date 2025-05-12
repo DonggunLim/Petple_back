@@ -48,7 +48,7 @@ class ChatService {
     } catch (error) {
       throw createError(
         500,
-        `[DB에러] ChatService.addMessageToChat ${error.message}`,
+        `[DB에러] ChatService.addMessages ${error.message}`,
       );
     }
   }

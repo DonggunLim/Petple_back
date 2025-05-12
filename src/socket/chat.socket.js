@@ -59,20 +59,20 @@ const ChatNamespace = (io) => {
 
       // 알림 전송
       // 방에 참여한 유저가없는 경우에만 알림 전송
-      // if (mapRoomToUsers.get(roomId).every((user) => user.userId !== to.id)) {
-      //   AlarmController.sendAlarm({
-      //     uid: Date.now(),
-      //     userId: to.id,
-      //     type: 'chat',
-      //     content: text,
-      //     from: {
-      //       nickName: from.nickName,
-      //       id: from.id,
-      //       profileImage: from.profileImage,
-      //     },
-      //     isRead: false,
-      //   });
-      // }
+      if (mapRoomToUsers.get(roomId).every((user) => user.userId !== to.id)) {
+        AlarmController.sendAlarm({
+          type: 'chat',
+          content,
+          to: {
+            id: to.id,
+          },
+          from: {
+            id: from.id,
+            nickname: from.nickname,
+            profileImage: from.profileImage,
+          },
+        });
+      }
 
       // 메시지 배열이 10개 이상이면 DB 저장
       if (mapRoomToMessages.get(roomId).length === 10) {
@@ -91,7 +91,7 @@ const ChatNamespace = (io) => {
       const unSavedMessages = mapRoomToMessages.get(socket.room);
 
       // 방에 유저가 없고 데이터베이스에 저장되지않은 메시지가 있다면 DB 저장
-      if (currentRoomUsersCount === 0 && unSavedMessages) {
+      if (currentRoomUsersCount === 0 && !!unSavedMessages) {
         saveMessages(socket.room, unSavedMessages);
       }
     });
