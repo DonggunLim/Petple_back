@@ -1,10 +1,11 @@
 const mysql = require('mysql2');
 const config = require('../consts/app');
 
+const isProdution = process.env.NODE_ENV === 'production';
 const pool = mysql
   .createPool({
-    host: 'localhost',
-    user: 'root',
+    host: isProdution ? config.mysql.host : 'localhost',
+    user: isProdution ? config.mysql.user : 'root',
     password: config.mysql.password,
     database: config.mysql.database,
     waitForConnections: true,
@@ -20,7 +21,7 @@ pool
     connection.release();
   })
   .catch((error) => {
-    console.error(error.message);
+    console.error(error);
   });
 
 module.exports = pool;

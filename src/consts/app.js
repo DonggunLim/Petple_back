@@ -48,6 +48,8 @@ const config = {
     naver: `https://nid.naver.com/oauth2.0/authorize?client_id=${process.env.NAVER_OAUTH_CLIENT_ID}&response_type=code&redirect_uri=${process.env.NAVER_OAUTH_REDIRECT_URI}&state=${state}`,
   },
   mysql: {
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
   },
