@@ -5,6 +5,7 @@ const SocketConfig = require('./src/socket/index');
 const ChatNamespace = require('./src/socket/chat.socket');
 const server = http.createServer(app);
 const schedule = require('node-schedule');
+const AlarmService = require('./src/service/alram/alram.service');
 
 // Socket 설정
 const io = SocketConfig.init(server);
