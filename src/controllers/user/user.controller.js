@@ -192,7 +192,6 @@ class UserController {
       if (!id) {
         throw createError(404, '유저 정보가 없습니다.');
       }
-      console.log(petId);
       await PetService.deletePet(petId);
       return res
         .status(200)

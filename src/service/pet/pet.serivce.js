@@ -27,7 +27,6 @@ class PetService {
   }
 
   async updatePet({ id, age, breed, name, image }) {
-    console.log(id);
     const sql = `
         UPDATE
             pets
