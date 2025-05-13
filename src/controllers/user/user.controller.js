@@ -147,7 +147,7 @@ class UserController {
 
     try {
       // 새로운 반려동물 추가
-      const newPet = await UserService.createPet({
+      const petId = await UserService.createPet({
         name: formData.name,
         age: formData.age,
         breed: formData.breed,
@@ -155,9 +155,9 @@ class UserController {
         userId,
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
-        message: '반려동물이 추가되었습니다.',
+        petId,
       });
     } catch (error) {
       next(error);

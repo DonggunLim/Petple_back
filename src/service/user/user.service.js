@@ -50,7 +50,8 @@ class UserService {
     `;
     const values = [name, age, breed, image, userId];
     try {
-      await promisePool.query(sql, values);
+      const [result] = await promisePool.query(sql, values);
+      return result.insertId;
     } catch (error) {
       throw createError(500, '[DB에러] UserService.createPet');
     }
