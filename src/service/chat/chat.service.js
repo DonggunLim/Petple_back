@@ -29,6 +29,9 @@ class ChatService {
   }
 
   async addMessages({ roomId, messages }) {
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return;
+    }
     const sql = `
       INSERT INTO
         chat_messages
