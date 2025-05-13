@@ -17,7 +17,6 @@ const token = async (req, res, next) => {
     if (!user) {
       throw createError(404, '유저가 존재하지 않습니다.');
     }
-
     req.user = user;
 
     next();

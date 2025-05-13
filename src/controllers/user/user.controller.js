@@ -4,6 +4,7 @@ const { createToken, verifyToken } = require('../../consts/token');
 const { createError } = require('../../utils/error');
 const pets = require('../../schemas/pet/pet.schema');
 const config = require('../../consts/app');
+const PetService = require('../../service/pet/pet.serivce');
 
 class UserController {
   async signup(req, res, next) {
@@ -164,27 +165,20 @@ class UserController {
   }
 
   async updatePetInfo(req, res, next) {
-    const { userId, petId, name, age, breed, image } = req.body;
+    const { petId, name, age, breed, image } = req.body;
 
     try {
-      // 기존 반려동물 프로필 수정
-      await UserService.updatePet(petId, {
+      await PetService.updatePet({
+        id: petId,
         name,
         age,
         breed,
         image,
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: '반려동물 정보가 업데이트되었습니다.',
-        pet: {
-          id: petId,
-          age,
-          name,
-          image,
-          breed,
-        },
       });
     } catch (error) {
       next(error);
@@ -192,19 +186,20 @@ class UserController {
   }
 
   async deletePetInfo(req, res, next) {
-    const { userId, petId } = req.body;
-
-    const user = await UserService.findById(userId);
-
-    if (!user) {
-      throw createError(404, '유저 정보가 없습니다.');
+    const { petId } = req.params;
+    const { id } = req.user;
+    try {
+      if (!id) {
+        throw createError(404, '유저 정보가 없습니다.');
+      }
+      console.log(petId);
+      await PetService.deletePet(petId);
+      return res
+        .status(200)
+        .json({ success: true, message: '반려동물 정보 삭제 성공' });
+    } catch (error) {
+      next(error);
     }
-
-    user.userPet = user.userPet.filter((id) => id.toString() !== petId);
-
-    await pets.findByIdAndDelete(petId);
-
-    res.status(201).json({ success: true, message: '반려동물 정보 삭제 성공' });
   }
 
   async getUsersByLocation(req, res, next) {
@@ -264,6 +259,29 @@ class UserController {
       res.json({ x: point.x, y: point.y });
     } catch (error) {
       console.error('좌표 변환 오류:', error);
+      next(error);
+    }
+  }
+
+  async signinWithGuest(req, res, next) {
+    try {
+      const { email, id } = await UserService.fetchGuestUser();
+
+      const token = createToken({
+        email,
+        userId: id,
+      });
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        sameSite: 'None',
+        secure: true,
+        maxAge: 60 * 60 * 1000,
+        path: '/',
+      });
+
+      return res.json({ isSuccess: true, loginStatus: true });
+    } catch (error) {
       next(error);
     }
   }

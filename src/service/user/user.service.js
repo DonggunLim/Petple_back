@@ -310,6 +310,26 @@ class UserService {
       );
     }
   }
+
+  async fetchGuestUser() {
+    const sql = `
+      SELECT 
+        *
+      FROM
+        users
+      WHERE
+        id = ?
+    `;
+    try {
+      const [[user]] = await promisePool.query(sql, [99]);
+      return user;
+    } catch (error) {
+      throw createError(
+        500,
+        `[DB에러 UserService.fetchGuestUser] ${error.message}`,
+      );
+    }
+  }
 }
 
 module.exports = new UserService();
