@@ -51,4 +51,6 @@ node index.js
 
 
 ## ERD
-![petple-erd drawio (1)](https://github.com/user-attachments/assets/b690d81d-8e59-4041-a805-164ae940a2cf)
+![petple-erd drawio (1)](https://github.com/user-attachments/assets/ecadb231-5e7a-4c6f-b1f0-04ad9c1e3997)
+
+
