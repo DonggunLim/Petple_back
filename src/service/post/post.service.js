@@ -86,19 +86,20 @@ class PostService {
         u.nickname,
         u.email,
         u.profileImage,
-        COUNT(pl.user_id) AS likesCount,
-        COUNT(c.id) AS commentsCount 
+        (
+          SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id
+        ) AS likesCount,
+        (
+          SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id
+        ) AS commentsCount
       FROM posts p
       JOIN users u ON p.creator_id = u.id
-      LEFT JOIN post_likes pl ON p.id = pl.post_id
-      LEFT JOIN comments c ON p.id = c.post_id
-      GROUP BY p.id
       ORDER BY likesCount DESC
       LIMIT 10 
     `;
     try {
-      const [postRow] = await promisePool.query(sql);
-      const posts = postRow.map(
+      const [postRows] = await promisePool.query(sql);
+      const posts = postRows.map(
         ({ userId, name, nickname, email, profileImage, ...rest }) => ({
           creator: {
             id: userId,
