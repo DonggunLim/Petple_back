@@ -12,11 +12,13 @@ const commentRoutes = require('./src/routes/comment/comment.routes');
 const publicRoutes = require('./src/routes/openApi/public.routes');
 const chatRoutes = require('./src/routes/chat/chat.routes');
 const alarmRoutes = require('./src/routes/alarm/alarm.routes');
+const morganLogger = require('./src/middleware/morganLogger.middleware');
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(morganLogger);
 app.use(
   cors({
     origin: ['https://petple-front.vercel.app', 'https://localhost:5173'],
