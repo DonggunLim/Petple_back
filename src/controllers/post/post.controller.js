@@ -168,6 +168,7 @@ class PostController {
     }
   }
 
+  /** 유저가 좋아요한 게시글 가져오기*/
   async getUserLikePosts(req, res, next) {
     const { page } = req.query;
     const { nickname } = req.params;
@@ -180,12 +181,16 @@ class PostController {
       }
 
       const userId = user.id;
-      const likePosts = await UserService.likePost(userId, page, pageSize);
+      const likePosts = await UserService.getlikePostsByUserId(
+        userId,
+        page,
+        pageSize,
+      );
 
       return res.status(200).json({
         success: true,
         message: '게시물 조회 성공',
-        likePosts: likePosts,
+        likePosts,
       });
     } catch (error) {
       next(error);

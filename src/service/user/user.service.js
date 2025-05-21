@@ -247,27 +247,50 @@ class UserService {
     }
   }
 
-  async likePost(userId, page, pageSize) {
+  async getlikePostsByUserId(userId, page, pageSize) {
     const offset = (page - 1) * pageSize;
-    const sql = `SELECT * FROM posts p
-      JOIN post_likes pl ON p.id = pl.post_id
-      WHERE pl.user_id = ?
-      ORDER BY p.created_at DESC
-      LIMIT ? OFFSET ?
+    const sql = `
+      SELECT 
+        p.*,
+        (
+          SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id 
+        ) AS likesCount,
+        (
+          SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id 
+        ) AS commentsCount
+      FROM 
+        posts p
+      JOIN
+        post_likes pl ON pl.post_id = p.id
+      WHERE 
+        pl.user_id = ?
+      ORDER BY 
+        p.created_at DESC
+      LIMIT 
+        ? 
+      OFFSET 
+        ?
     `;
     const countSql = `
-      SELECT COUNT(*) AS total
-      FROM post_likes
-      WHERE user_id = ?
+      SELECT 
+        COUNT(*) AS total
+      FROM 
+        post_likes
+      WHERE 
+        user_id = ?
     `;
-
     try {
-      const [posts] = await promisePool.query(sql, [userId, pageSize, offset]);
-      const [[{ total }]] = await promisePool.query(countSql, [userId]);
+      const [[posts], [[{ total }]]] = await Promise.all([
+        promisePool.query(sql, [userId, pageSize, offset]),
+        promisePool.query(countSql, [userId]),
+      ]);
       const totalPages = Math.ceil(total / pageSize);
       return { posts, totalPages };
     } catch (error) {
-      throw createError(500, `[DB에러 UserService.likePost] ${error.message}`);
+      throw createError(
+        500,
+        `[DB에러 UserService.getlikePostsByUserId] ${error.message}`,
+      );
     }
   }
 
