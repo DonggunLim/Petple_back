@@ -14,7 +14,7 @@ morgan.token('timestamp', () => {
 });
 const productionFormat =
   '[:timestamp] [REQ-ID: :id] :method :url :status - :response-time ms';
-const format = process.env.NODE === 'production' ? productionFormat : 'dev';
+const format = process.env.NODE_ENV === 'production' ? productionFormat : 'dev';
 const morganLogger = morgan(format);
 
 module.exports = morganLogger;
