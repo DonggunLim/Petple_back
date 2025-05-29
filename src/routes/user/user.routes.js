@@ -1,6 +1,6 @@
 const UserController = require('../../controllers/user/user.controller');
 const userRoutes = require('express').Router();
-const { token } = require('../../middleware/token.middleware');
+const { token } = require('../../middleware/withAuth.middleware');
 
 userRoutes.get('/info', token, UserController.getUserInfo); // /api/my/info
 userRoutes.get('/near', UserController.getUsersByLocation);

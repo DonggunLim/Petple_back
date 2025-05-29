@@ -1,5 +1,5 @@
 const CommentController = require('../../controllers/comment/comment.controller');
-const { token } = require('../../middleware/token.middleware');
+const { token } = require('../../middleware/withAuth.middleware');
 
 const commentRoutes = require('express').Router();
 

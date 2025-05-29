@@ -2,7 +2,7 @@ const { verifyToken } = require('../consts/token');
 const UserService = require('../service/user/user.service');
 const { createError } = require('../utils/error');
 
-const token = async (req, res, next) => {
+const withAuth = async (req, res, next) => {
   try {
     const { token } = req.cookies;
     if (!token) {
@@ -33,4 +33,4 @@ const token = async (req, res, next) => {
   }
 };
 
-module.exports = { token };
+module.exports = { withAuth };

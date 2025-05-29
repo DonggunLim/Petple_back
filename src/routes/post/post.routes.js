@@ -1,6 +1,6 @@
 const PostController = require('../../controllers/post/post.controller');
 const postLikeController = require('../../controllers/postLike/postLike.controller');
-const { token } = require('../../middleware/token.middleware');
+const { token } = require('../../middleware/withAuth.middleware');
 const postsRoutes = require('express').Router();
 
 postsRoutes.get('/', PostController.getPosts);
