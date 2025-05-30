@@ -1,4 +1,4 @@
-require('./db_init');
+require('./src/config/mongoDB.config');
 require('dotenv').config();
 const cors = require('cors');
 const express = require('express');
