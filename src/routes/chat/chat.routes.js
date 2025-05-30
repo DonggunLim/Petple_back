@@ -1,11 +1,11 @@
 const ChatController = require('../../controllers/chat/chat.controller');
-const { token } = require('../../middleware/withAuth.middleware');
+const withAuth = require('../../middleware/withAuth.middleware');
 
 const chatRoutes = require('express').Router();
 
 chatRoutes.get(
   '/messages/:targetUserNickname',
-  token,
+  withAuth,
   ChatController.getMessages,
 );
 
