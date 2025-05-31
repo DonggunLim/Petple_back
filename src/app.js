@@ -1,11 +1,11 @@
-require('./src/config/mongoDB.config');
+require('./config/mongoDB.config');
 require('dotenv').config();
 const cors = require('cors');
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const errorHandler = require('./src/middleware/errorHandler');
-const morganLogger = require('./src/middleware/morganLogger.middleware');
-const apiRoutes = require('./src/routes');
+const errorHandler = require('./middleware/errorHandler');
+const morganLogger = require('./middleware/morganLogger.middleware');
+const apiRoutes = require('./routes');
 
 const app = express();
 app.use(express.json());

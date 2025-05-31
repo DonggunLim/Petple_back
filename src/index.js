@@ -1,11 +1,11 @@
-const config = require('./src/consts/app');
+const config = require('./consts/app');
 const http = require('http');
 const app = require('./app');
-const SocketConfig = require('./src/socket/index');
-const ChatNamespace = require('./src/socket/chat.socket');
+const SocketConfig = require('./socket/index');
+const ChatNamespace = require('./socket/chat.socket');
 const server = http.createServer(app);
 const schedule = require('node-schedule');
-const AlarmService = require('./src/service/alram/alram.service');
+const AlarmService = require('./service/alram/alram.service');
 
 // Socket 설정
 const io = SocketConfig.init(server);
