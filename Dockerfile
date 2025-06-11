@@ -8,4 +8,4 @@ FROM node:20-alpine
 WORKDIR /app 
 COPY --from=builder /app ./
 
-CMD ["node", "index.js"] 
+CMD ["node", "src/index.js"] 
