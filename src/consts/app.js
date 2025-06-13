@@ -4,7 +4,7 @@ const state = encodeURIComponent(`myapp-${Date.now()}`);
 
 const config = {
   app: {
-    port: 3000,
+    port: 8000,
     frontUrl: process.env.FRONT_URL,
   },
   jwt: {
